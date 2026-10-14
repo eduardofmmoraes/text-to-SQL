@@ -10,7 +10,7 @@ def execute_query(query: str) -> pd.DataFrame:
     with pg.connect(
         host="localhost",
         database="enterprise",
-        user="admin",
+        user="gemini",
         password="password",
         port=6543
     ) as conn:
@@ -35,7 +35,7 @@ def get_tables() -> list:
 def get_initial_chat() -> list:
     chat = [
         ("system", "Você é um assistente de IA que traduz consultas em linguagem natural para consultas SQL, com o sgbd {sgbd}. "
-                    "tabelas:\n{tabelas}. "
+                    "tabelas:\n{tables}. "
                     "Forneça apenas a consulta SQL sem explicações adicionais."
                     "Caso não seja especificado, arredonde números decimais para duas casas."
         ),
@@ -47,16 +47,22 @@ def get_initial_chat() -> list:
 def main():
     load_dotenv()
 
-    prompt = ChatPromptTemplate.from_messages(get_initial_chat())
-    model = init_chat_model(model="google_genai:gemini-3.1-flash-lite")
+    chat = get_initial_chat()
+    model = init_chat_model(
+        base_url="http://localhost:1235/v1",
+        model="openai:qwen/qwen3.6-35b-a3b",
+        api_key="lm-studio",
+    )
 
     print("================================")
     user_request = input("O que você quer saber?\n")
+    chat.append(("human", user_request))
 
     while user_request.lower() != "nada":
+        prompt = ChatPromptTemplate.from_messages(chat)
         chat_input = prompt.invoke({
             "sgbd": "PostgreSQL",
-            "tabelas": get_tables(),
+            "tables": get_tables(),
             "query": user_request
         }).to_messages()
 
@@ -64,12 +70,18 @@ def main():
         if query.lower().startswith("```sql"):
             query = query[6:-3].strip()
 
-        print("QUERY:")
-        print(query)
-        print("RESULTADO:")
-        print(execute_query(query))
-        print("================================")
+        db_response = execute_query(query)
+        print(f"""RESULTADO:
+        {db_response}
+================================
+================================
+================================"""
+        )
+
+        chat.append(("ai", "query"))
+
         user_request = input("O que você quer saber?\n")
+        chat.append(("human", user_request))
 
 if __name__ == "__main__":
     main()

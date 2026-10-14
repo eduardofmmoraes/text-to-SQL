@@ -623,4 +623,9 @@ INSERT INTO pagamentos (funcionario_id, competencia, tipo, valor_bruto, desconto
   (30, '2026-08-01', 'salario', 3600.0, 432.0, 3168.0, '2026-09-05'),
   (30, '2026-09-01', 'salario', 3600.0, 432.0, 3168.0, '2026-10-05');
 
+CREATE ROLE gemini LOGIN PASSWORD 'password';
+GRANT USAGE ON SCHEMA public TO gemini;
+GRANT SELECT ON ALL TABLES IN SCHEMA public TO gemini;
+GRANT SELECT ON ALL TABLES IN SCHEMA information_schema TO gemini;
+
 COMMIT;
