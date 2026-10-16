@@ -70,6 +70,9 @@ def main():
         if query.lower().startswith("```sql"):
             query = query[6:-3].strip()
 
+        with open("query.sql", "w") as f:
+            f.write(query)
+
         db_response = execute_query(query)
         print(f"""RESULTADO:
         {db_response}
